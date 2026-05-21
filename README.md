@@ -4,8 +4,7 @@ A production-ready REST API for the PawAdopt platform, built with Node.js, Expre
 
 ## Live URL
 
-> Replace with your deployed Render URL after deployment  
-> Example: `https://pawadopt-server.onrender.com`
+**[https://pawadopt-server.onrender.com](https://pawadopt-server.onrender.com)**
 
 ## Features
 
