@@ -534,6 +534,19 @@ async function server() {
 
     app.listen(port, () => {
       console.log(`PawAdopt server is running on port ${port}`);
+
+      // Self-ping to prevent Render free tier sleep
+      if (process.env.NODE_ENV === "production") {
+        const https = require("https");
+        const selfUrl = process.env.RENDER_EXTERNAL_URL || `https://pawadopt-server.onrender.com`;
+        setInterval(() => {
+          https.get(selfUrl, (res) => {
+            console.log(`Self-ping: ${res.statusCode}`);
+          }).on("error", (err) => {
+            console.error("Self-ping failed:", err.message);
+          });
+        }, 14 * 60 * 1000); // every 14 minutes
+      }
     });
 
     console.log("Successfully connected to MongoDB.");
