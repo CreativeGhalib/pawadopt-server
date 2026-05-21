@@ -90,6 +90,7 @@ async function server() {
     const usersCollection = db.collection("users");
     const petsCollection = db.collection("pets");
     const adoptionRequestsCollection = db.collection("adoptionRequests");
+    const wishlistsCollection = db.collection("wishlists");
 
     await usersCollection.createIndex({ email: 1 }, { unique: true });
     await petsCollection.createIndex({ ownerEmail: 1 });
@@ -97,6 +98,7 @@ async function server() {
     await petsCollection.createIndex({ species: 1 });
     await adoptionRequestsCollection.createIndex({ requesterEmail: 1 });
     await adoptionRequestsCollection.createIndex({ petId: 1, requesterEmail: 1 });
+    await wishlistsCollection.createIndex({ petId: 1, userEmail: 1 }, { unique: true });
 
     app.get("/health/db", async (req, res) => {
       await db.command({ ping: 1 });
@@ -526,6 +528,60 @@ async function server() {
       res.send(result);
     });
 
+    // ── Wishlist APIs ─────────────────────────────────────────────
+    app.post("/wishlists", verifyToken, async (req, res) => {
+      const userEmail = req.decoded.email;
+      const { petId } = req.body;
+
+      if (!petId || !isValidObjectId(petId)) {
+        return res.status(400).send({ message: "Valid petId is required" });
+      }
+
+      const pet = await petsCollection.findOne({ _id: new ObjectId(petId) });
+      if (!pet) {
+        return res.status(404).send({ message: "Pet not found" });
+      }
+
+      const item = {
+        petId,
+        petName: pet.petName,
+        petImage: pet.imageUrl,
+        species: pet.species,
+        breed: pet.breed,
+        adoptionFee: pet.adoptionFee,
+        status: pet.status,
+        userEmail,
+        createdAt: new Date(),
+      };
+
+      try {
+        const result = await wishlistsCollection.insertOne(item);
+        res.status(201).send(result);
+      } catch (err) {
+        if (err.code === 11000) {
+          return res.status(409).send({ message: "Pet already in your wishlist" });
+        }
+        throw err;
+      }
+    });
+
+    app.get("/wishlists", verifyToken, async (req, res) => {
+      const userEmail = req.decoded.email;
+      const items = await wishlistsCollection
+        .find({ userEmail })
+        .sort({ createdAt: -1 })
+        .toArray();
+      res.send(items);
+    });
+
+    app.delete("/wishlists/:petId", verifyToken, async (req, res) => {
+      const userEmail = req.decoded.email;
+      const { petId } = req.params;
+      const result = await wishlistsCollection.deleteOne({ petId, userEmail });
+      res.send(result);
+    });
+    // ─────────────────────────────────────────────────────────────
+
     app.use((req, res) => {
       res.status(404).send({ message: "API route not found" });
     });
@@ -534,19 +590,6 @@ async function server() {
 
     app.listen(port, () => {
       console.log(`PawAdopt server is running on port ${port}`);
-
-      // Self-ping to prevent Render free tier sleep
-      if (process.env.NODE_ENV === "production") {
-        const https = require("https");
-        const selfUrl = process.env.RENDER_EXTERNAL_URL || `https://pawadopt-server.onrender.com`;
-        setInterval(() => {
-          https.get(selfUrl, (res) => {
-            console.log(`Self-ping: ${res.statusCode}`);
-          }).on("error", (err) => {
-            console.error("Self-ping failed:", err.message);
-          });
-        }, 14 * 60 * 1000); // every 14 minutes
-      }
     });
 
     console.log("Successfully connected to MongoDB.");
