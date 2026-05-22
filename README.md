@@ -4,6 +4,14 @@ This is the backend API for PawAdopt. It manages users, pets, adoption requests,
 
 Live API: `https://pawadopt-server.onrender.com`
 
+## Submission Links
+
+Client-side GitHub Repository: [https://github.com/CreativeGhalib/pawadopt-client](https://github.com/CreativeGhalib/pawadopt-client)
+
+Server-side GitHub Repository: [https://github.com/CreativeGhalib/pawadopt-server](https://github.com/CreativeGhalib/pawadopt-server)
+
+Live Website Link: [https://pawadopt-client.vercel.app](https://pawadopt-client.vercel.app)
+
 ## Main Features
 
 - Issues JWT tokens and stores them in HTTPOnly cookies.
