@@ -527,8 +527,7 @@ async function server() {
 
       res.send(result);
     });
-
-    // ── Wishlist APIs ─────────────────────────────────────────────
+    // Wishlist API
     app.post("/wishlists", verifyToken, async (req, res) => {
       const userEmail = req.decoded.email;
       const { petId } = req.body;
@@ -580,7 +579,7 @@ async function server() {
       const result = await wishlistsCollection.deleteOne({ petId, userEmail });
       res.send(result);
     });
-    // ─────────────────────────────────────────────────────────────
+
 
     app.use((req, res) => {
       res.status(404).send({ message: "API route not found" });
